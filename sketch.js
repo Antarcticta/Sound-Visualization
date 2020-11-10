@@ -33,20 +33,19 @@ function setup() {
 
 	// volume slider
 	slider = createSlider(0, 1, 0.25, 0.01);
+	slider.position(width-140, 10);
 
 	// play/pause button
 	toggleButton = createButton('►II');
 	toggleButton.mousePressed(toggle);
+	toggleButton.position(10, 10);
 
 	// button to stop the song
 	stopButton = createButton('■');
 	stopButton.mousePressed(stopSong);
+	stopButton.position(50, 10);
 
-	loopCheckbox = createCheckbox('Loop', true);
-	loopCheckbox.changed(loopToggled);
-
-	input = createFileInput(handleFile);
-
+	// for the different options of visualizations
 	modeOptions = ['Circle', 'Circle with Amplitude', 'Circle of Lines', 'Circle of Lines with Hole',
 								'Circle of Lines with Amplitude', 'Circle of Points', 'Circle of Points with Amplitude',
 								'Connected Circle', 'Connected Circle with Amplitude', 'Bar Graph', 'Bar Graph with Amplitude',
@@ -57,7 +56,18 @@ function setup() {
 		modeSelect.option(modeOptions[i]);
 	}
 	modeSelect.selected(modeOptions[0]);
+	modeSelect.position(130, 10);
 	modeSelect.changed(modeChanged);
+
+	// an empty paragraph object to space out the options
+	createP('');
+
+	// use this to toggle the looping of the file
+	loopCheckbox = createCheckbox('Loop', true);
+	loopCheckbox.changed(loopToggled);
+
+	// for the user-inputted files
+	input = createFileInput(handleFile);
 
 	// decide how to use the microphone and then do it here:
 	// mic = new p5.AudioIn();
