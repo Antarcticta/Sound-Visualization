@@ -18,6 +18,7 @@ var input;
 
 function preload() {
 	song = loadSound("bach.mp3");
+	sleep(1000);
 	song.playMode('restart');
 	song.loop();
 }
@@ -48,7 +49,7 @@ function setup() {
 
 	modeOptions = ['Circle', 'Circle with Amplitude', 'Circle of Lines', 'Circle of Lines with Hole',
 								'Circle of Lines with Amplitude', 'Circle of Points', 'Circle of Points with Amplitude',
-								'Connected Circle', 'Connected Circle with Amplitude', 'Bar Graph', 'Bar Graph with Amp',
+								'Connected Circle', 'Connected Circle with Amplitude', 'Bar Graph', 'Bar Graph with Amplitude',
 								'Bar Graph of Lines', 'Bar Graph of Lines with Amplitude',
 								'Bar Graph of Rectangles', 'Particles with Forces'];
 	modeSelect = createSelect();
@@ -62,9 +63,12 @@ function setup() {
 	// mic = new p5.AudioIn();
 
 	// play the music
-	song.play();
+	// I have commented this out because I would rather leave this open
+	// to the user rather than pushing the 'default' file on them
 
-	// use this to analyze the volume
+	// song.play();
+
+	// use this object to analyze the volume
 	amplitude = new p5.Amplitude();
 
 	// use this for FFT analysis
@@ -230,9 +234,13 @@ class Particle {
 		if (this.pos.y < 0) {this.pos.y = height;}
 	}
 
+	gravitateTowards(x, y) {
+		// implement something for this particle to gravitate towards the given point
+		// use this.addForce(____, ____);
+	}
+
   drawSelf() {
-    strokeWeight(this.size);
-    point(this.pos.x, this.pos.y);
+    ellipse(this.pos.x, this.pos.y, this.size, this.size);
   }
 }
 
