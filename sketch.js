@@ -47,7 +47,8 @@ function setup() {
 
 	// for the different options of visualizations
 	modeOptions = ['Circle', 'Circle with Amplitude', 'Circle of Lines', 'Circle of Lines with Hole',
-								'Circle of Lines with Amplitude', 'Circle of Points', 'Circle of Points with Amplitude',
+								'Circle of Lines with Amplitude', 'Circle of Circles', 'Circle of Circles with Amplitude',
+								'Circle of Points', 'Circle of Points With Lines',
 								'Connected Circle', 'Connected Circle with Amplitude', 'Bar Graph', 'Bar Graph with Amplitude',
 								'Bar Graph of Lines', 'Bar Graph of Lines with Amplitude',
 								'Bar Graph of Rectangles', 'Particles with Forces'];
@@ -108,7 +109,7 @@ function draw() {
 	// THIS IS WHAT DRAWS THE VISUALIZATION
 	drawAccordingToMode(mode, spectrum, amplitudeLevel);
 
-	if (hu >= 255) {
+	if (hu >= 240) {
 		hueStep *= -1;
 	}
 	if (hu < 0) {
@@ -151,7 +152,8 @@ function handleFile(file) {
 	if (file.type === 'audio') {
 		stopSong();
 		song = loadSound(file.data);
-		sleep(2000);
+		sleep(1500);
+		song.play();
 	} else {
 		print("This file is not the correct format");
 	}
@@ -185,33 +187,39 @@ function drawAccordingToMode(mode, spectrum, amplitudeLevel) {
 			circleLinesWithAmpDraw(spectrum, amplitudeLevel, 50);
 			return;
 		case 5:
-			circlePointsDraw(spectrum);
+			circleOfCirclesDraw(spectrum);
 			return;
 		case 6:
-			circlePointsWithAmpDraw(spectrum, amplitudeLevel);
+			circleOfCirclesWithAmpDraw(spectrum, amplitudeLevel);
 			return;
 		case 7:
-			connectedCircleDraw(spectrum);
+			circlePointsDraw(spectrum);
 			return;
 		case 8:
-			connectedCircleWithAmpDraw(spectrum, amplitudeLevel);
+			circlePointsWithLinesDraw(spectrum);
 			return;
 		case 9:
-			barGraphDraw(spectrum);
+			connectedCircleDraw(spectrum);
 			return;
 		case 10:
-			barGraphWithAmpDraw(spectrum, amplitudeLevel);
+			connectedCircleWithAmpDraw(spectrum, amplitudeLevel);
 			return;
 		case 11:
-			barGraphLinesDraw(spectrum);
+			barGraphDraw(spectrum);
 			return;
 		case 12:
-			barGraphLinesWithAmpDraw(spectrum, amplitudeLevel);
+			barGraphWithAmpDraw(spectrum, amplitudeLevel);
 			return;
 		case 13:
-			barGraphRectDraw(spectrum, 2);
+			barGraphLinesDraw(spectrum);
 			return;
 		case 14:
+			barGraphLinesWithAmpDraw(spectrum, amplitudeLevel);
+			return;
+		case 15:
+			barGraphRectDraw(spectrum, 2);
+			return;
+		case 16:
 			particleForcesDraw(spectrum, particles);
 			return;
 	}
@@ -311,8 +319,8 @@ function circleLinesWithAmpDraw(spectrum, amplitudeLevel, hole_size) {
 	}
 
 	var radius1 = map(amplitudeLevel, 0, 1, 200, 300);
-	var radius2 = map(amplitudeLevel, 0, 1, 100, 150);
-	var radius3 = map(amplitudeLevel, 0, 1, 50, 100);
+	var radius2 = map(amplitudeLevel, 0, 1, 100, 275);
+	var radius3 = map(amplitudeLevel, 0, 1, 50, 250);
 
 	stroke(255);
 
@@ -346,8 +354,8 @@ function circleWithAmpDraw(spectrum, amplitudeLevel) {
 	translate(width/2, height/2);
 
 	var radius1 = map(amplitudeLevel, 0, 1, 200, 300);
-	var radius2 = map(amplitudeLevel, 0, 1, 100, 150);
-	var radius3 = map(amplitudeLevel, 0, 1, 50, 100);
+	var radius2 = map(amplitudeLevel, 0, 1, 100, 275);
+	var radius3 = map(amplitudeLevel, 0, 1, 50, 250);
 
 	beginShape();
 
@@ -372,12 +380,63 @@ function circleWithAmpDraw(spectrum, amplitudeLevel) {
 	ellipse(0, 0, radius3, radius3);
 }
 
-function circlePointsDraw(spectrum) {
+function circleOfCirclesDraw(spectrum) {
 	translate(width/2, height/2);
 
 	for (var i = 0; i < spectrum.length; i++) {
 		var angle = map(i, 0, spectrum.length, 0, 360);
 		var amp = spectrum[i];
+		var r = map(amp, 0, 256, 125, 250);
+
+		var x = r * cos(angle);
+		var y = r * sin(angle);
+
+		var radius = map(spectrum[i], 0, 256, 3, 12);
+
+		ellipse(x, y, radius, radius);
+	}
+}
+
+function circleOfCirclesWithAmpDraw(spectrum, amplitudeLevel) {
+	translate(width/2, height/2);
+
+	for (var i = 0; i < spectrum.length; i++) {
+		var angle = map(i, 0, spectrum.length, 0, 360);
+		var amp = spectrum[i];
+		var r = map(amp, 0, 256, 125, 250);
+
+		var x = r * cos(angle);
+		var y = r * sin(angle);
+
+		var radius = map(spectrum[i], 0, 256, 3, 12);
+
+		ellipse(x, y, radius, radius);
+	}
+
+	var radius1 = map(amplitudeLevel, 0, 1, 200, 300);
+	var radius2 = map(amplitudeLevel, 0, 1, 100, 275);
+	var radius3 = map(amplitudeLevel, 0, 1, 50, 250);
+
+	stroke(255);
+
+	fill(16);
+	ellipse(0, 0, radius1, radius1);
+	fill(40);
+	ellipse(0, 0, radius2, radius2);
+	fill(100);
+	ellipse(0, 0, radius3, radius3);
+}
+
+function circlePointsDraw(spectrum) {
+	translate(width/2, height/2);
+
+	for (var i = 0; i < spectrum.length; i+=0.5) {
+		if (i % 1 == 0) {
+			var amp = spectrum[i];
+		} else {
+			var amp = (spectrum[i-0.5] + spectrum[i+0.5]) / 2;
+		}
+		var angle = map(i, 0, spectrum.length/3, 0, 720);
 		var r = map(amp, 0, 256, 125, 250);
 
 		var x = r * cos(angle);
@@ -388,12 +447,16 @@ function circlePointsDraw(spectrum) {
 	}
 }
 
-function circlePointsWithAmpDraw(spectrum, amplitudeLevel) {
+function circlePointsWithLinesDraw(spectrum) {
 	translate(width/2, height/2);
 
-	for (var i = 0; i < spectrum.length; i++) {
-		var angle = map(i, 0, spectrum.length, 0, 360);
-		var amp = spectrum[i];
+	for (var i = 0; i < spectrum.length; i+=0.5) {
+		if (i % 1 == 0) {
+			var amp = spectrum[i];
+		} else {
+			var amp = (spectrum[i-0.5] + spectrum[i+0.5]) / 2;
+		}
+		var angle = map(i, 0, spectrum.length/3, 0, 720);
 		var r = map(amp, 0, 256, 125, 250);
 
 		var x = r * cos(angle);
@@ -403,18 +466,14 @@ function circlePointsWithAmpDraw(spectrum, amplitudeLevel) {
 		point(x, y);
 	}
 
-	var radius1 = map(amplitudeLevel, 0, 1, 200, 300);
-	var radius2 = map(amplitudeLevel, 0, 1, 100, 150);
-	var radius3 = map(amplitudeLevel, 0, 1, 50, 100);
-
-	stroke(255);
-
-	fill(16);
-	ellipse(0, 0, radius1, radius1);
-	fill(40);
-	ellipse(0, 0, radius2, radius2);
-	fill(100);
-	ellipse(0, 0, radius3, radius3);
+	for (var i = 0; i < spectrum.length; i++) {
+		var angle = map(i, 0, spectrum.length, 0, 360);
+		var amp = spectrum[i];
+		var r = map(amp, 0, 256, 75, 150);
+		var x = r * cos(angle);
+		var y = r * sin(angle);
+		line(0, 0, x, y);
+	}
 }
 
 function connectedCircleDraw(spectrum) {
@@ -461,8 +520,8 @@ function connectedCircleWithAmpDraw(spectrum, amplitudeLevel) {
 	}
 
 	var radius1 = map(amplitudeLevel, 0, 1, 200, 300);
-	var radius2 = map(amplitudeLevel, 0, 1, 100, 150);
-	var radius3 = map(amplitudeLevel, 0, 1, 50, 100);
+	var radius2 = map(amplitudeLevel, 0, 1, 100, 275);
+	var radius3 = map(amplitudeLevel, 0, 1, 50, 250);
 
 	stroke(255);
 
@@ -504,8 +563,8 @@ function barGraphWithAmpDraw(spectrum, amplitudeLevel) {
 	endShape();
 
 	var radius1 = map(amplitudeLevel, 0, 1, 200, 300);
-	var radius2 = map(amplitudeLevel, 0, 1, 100, 150);
-	var radius3 = map(amplitudeLevel, 0, 1, 50, 100);
+	var radius2 = map(amplitudeLevel, 0, 1, 100, 275);
+	var radius3 = map(amplitudeLevel, 0, 1, 50, 250);
 
 	stroke(255);
 
@@ -539,8 +598,8 @@ function barGraphLinesWithAmpDraw(spectrum, amplitudeLevel) {
 	}
 
 	var radius1 = map(amplitudeLevel, 0, 1, 200, 300);
-	var radius2 = map(amplitudeLevel, 0, 1, 100, 150);
-	var radius3 = map(amplitudeLevel, 0, 1, 50, 100);
+	var radius2 = map(amplitudeLevel, 0, 1, 100, 275);
+	var radius3 = map(amplitudeLevel, 0, 1, 50, 250);
 
 	stroke(255);
 
@@ -563,6 +622,7 @@ function barGraphRectDraw(spectrum, spacing) {
 	}
 }
 
+// Don't use this one... it's not done yet
 function particleForcesDraw(spectrum, particles) {
 	var forces = [];
 	var gravity = [];
