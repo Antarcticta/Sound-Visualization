@@ -1,4 +1,4 @@
-var song;
+var audio;
 var slider;
 var toggleButton;
 var stopButton;
@@ -7,32 +7,30 @@ var amplitude;
 var fft;
 var hu;
 var hueStep;
-var particles = [];
 var modeSelect;
-var mode = 0;
+var mode = 1;
 var modeOptions = [];
-var mic;
 var input;
-
-// import Particle from "./Particle.js";
+// var canvas;
 
 function preload() {
-	song = loadSound("bach.mp3");
+	audio = loadSound("bach.mp3");
 	sleep(1000);
-	song.playMode('restart');
-	song.loop();
+	audio.playMode('restart');
+	audio.loop();
 }
 
+// runs before the first frame is drawn
 function setup() {
-	createCanvas(512, 512);
+	canvas = createCanvas(512, 512);
 
 	angleMode(DEGREES);
 	colorMode(HSB);
 	hu = 0;
-	hueStep = 0.2;
+	hueStep = 0;
 
 	// volume slider
-	slider = createSlider(0, 1, 0.25, 0.01);
+	slider = createSlider(0, 1, 0.5, 0.01);
 	slider.position(width-140, 10);
 
 	// play/pause button
@@ -42,7 +40,7 @@ function setup() {
 
 	// button to stop the song
 	stopButton = createButton('■');
-	stopButton.mousePressed(stopSong);
+	stopButton.mousePressed(stopAudio);
 	stopButton.position(50, 10);
 
 	// for the different options of visualizations
@@ -51,17 +49,15 @@ function setup() {
 								'Circle of Points', 'Circle of Points With Lines',
 								'Connected Circle', 'Connected Circle with Amplitude', 'Bar Graph', 'Bar Graph with Amplitude',
 								'Bar Graph of Lines', 'Bar Graph of Lines with Amplitude',
-								'Bar Graph of Rectangles', 'Particles with Forces'];
+								'Bar Graph of Rectangles'];
+
 	modeSelect = createSelect();
 	for (var i = 0; i < modeOptions.length; i++) {
 		modeSelect.option(modeOptions[i]);
 	}
-	modeSelect.selected(modeOptions[0]);
+	modeSelect.selected(modeOptions[1]);
 	modeSelect.position(130, 10);
 	modeSelect.changed(modeChanged);
-
-	// an empty paragraph object to space out the options
-	createP('');
 
 	// use this to toggle the looping of the file
 	loopCheckbox = createCheckbox('Loop', true);
@@ -70,25 +66,14 @@ function setup() {
 	// for the user-inputted files
 	input = createFileInput(handleFile);
 
-	// decide how to use the microphone and then do it here:
-	// mic = new p5.AudioIn();
-
-	// play the music
-	// I have commented this out because I would rather leave this open
-	// to the user rather than pushing the 'default' file on them
-
-	// song.play();
+	// set up the canvas to receive drag&dropped files
+	canvas.drop(handleFile);
 
 	// use this object to analyze the volume
 	amplitude = new p5.Amplitude();
 
 	// use this for FFT analysis
-	fft = new p5.FFT(0.85, 128);
-
-	for (var i = 0; i < 256; i++) {
-		particles[i] = new Particle(random(width), random(height), random(1, 5));
-	}
-
+	fft = new p5.FFT(0.8, 128);
 }
 
 function draw() {
@@ -103,63 +88,71 @@ function draw() {
 	var amplitudeLevel = amplitude.getLevel();
 
 	// use the volume slider
-	song.setVolume(slider.value());
+	audio.setVolume(slider.value());
 
-	// CALL VISUALIZATION FUNCTION OF CHOICE
-	// THIS IS WHAT DRAWS THE VISUALIZATION
+	// this draws the visualization the user has chosen
 	drawAccordingToMode(mode, spectrum, amplitudeLevel);
 
+	// if the color is too close to the max or min,
+	// make it go in the other direction
 	if (hu >= 240) {
 		hueStep *= -1;
 	}
 	if (hu < 0) {
 		hueStep *= -1;
 	}
+	// change the color of everything
 	hu += hueStep;
 }
 
 // for when the play/pause button is clicked
 function toggle() {
-	if (song.isPlaying()) {
+	if (audio.isPlaying()) {
 		hueStep = 0;
-		song.pause();
+		audio.pause();
 	} else {
 		hueStep = 0.2;
-		song.play();
+		audio.play();
 	}
 }
 
 // for when the stop button is pressed (resets the sound file)
-function stopSong() {
-	song.stop();
+function stopAudio() {
+	audio.stop();
 }
 
+// to handle when the mode is changed
 function modeChanged() {
 	var selected = modeSelect.value();
 	mode = modeOptions.indexOf(selected);
 }
 
+// to toggle looping
 function loopToggled() {
-	if (this.checked()) {
-		song.setLoop(true);
-	} else {
-		song.setLoop(false);
-	}
+	audio.setLoop(this.checked());
 }
 
+// for when a file is inputted
 function handleFile(file) {
-	print(file);
+	print(file.name);
 	if (file.type === 'audio') {
-		stopSong();
-		song = loadSound(file.data);
-		sleep(1500);
-		song.play();
+		stopAudio();
+		audio = loadSound(file.data);
+		sleep(2000);
+		audio.play();
 	} else {
 		print("This file is not the correct format");
 	}
 }
 
-// use this when things need to load
+// this is called when a key is pressed
+function keyTyped() {
+	if (key === ' ') {
+		toggle();
+	}
+}
+
+// use this when files need to load
 function sleep(milliseconds) {
   var start = new Date().getTime();
   for (var i = 0; i < 1e7; i++) {
@@ -169,6 +162,7 @@ function sleep(milliseconds) {
   }
 }
 
+// this will draw the correct visualization based on the mode given
 function drawAccordingToMode(mode, spectrum, amplitudeLevel) {
 	switch (mode) {
 		case 0:
@@ -219,64 +213,28 @@ function drawAccordingToMode(mode, spectrum, amplitudeLevel) {
 		case 15:
 			barGraphRectDraw(spectrum, 2);
 			return;
-		case 16:
-			particleForcesDraw(spectrum, particles);
-			return;
 	}
-}
-
-class Particle {
-
-  constructor (x, y, size) {
-    this.pos = createVector(x, y);
-		this.vel = createVector(0, 0);
-    this.acc = createVector(0, 0);
-    this.size = size;
-  }
-
-  addForce(force) {
-    this.acc.add(force);
-  }
-
-  updateSelf() {
-    this.vel.add(this.acc);
-		this.vel = createVector(constrain(this.vel.x, -1, 1), constrain(this.vel.y, -1, 1));
-		this.pos.add(this.vel);
-		this.acc.mult(0);
-  }
-
-	edges() {
-		if (this.pos.x > width) {this.pos.x = 0;}
-		if (this.pos.x < 0) {this.pos.x = width;}
-		if (this.pos.y > height) {this.pos.y = 0;}
-		if (this.pos.y < 0) {this.pos.y = height;}
-	}
-
-	gravitateTowards(x, y) {
-		// implement something for this particle to gravitate towards the given point
-		// use this.addForce(____, ____);
-	}
-
-  drawSelf() {
-    ellipse(this.pos.x, this.pos.y, this.size, this.size);
-  }
 }
 
 // DRAWING FUNCTIONS
 // These are for drawing the visualization.
-// Probably don't call these at the same time.
-// Call these during draw.
 
 // Circle of lines
 function circleLinesDraw(spectrum) {
+	// usually (0, 0) is in the top left
+	// this makes it the center
 	translate(width/2, height/2);
 
 	for (var i = 0; i < spectrum.length; i++) {
 		var angle = map(i, 0, spectrum.length, 0, 360);
 		var amp = spectrum[i];
 		var r = map(amp, 0, 256, 100, 250);
+
+		// find the rotated version of the point (0, r)
 		var x = r * cos(angle);
 		var y = r * sin(angle);
+
+		// then draw a line from the center to that point
 		line(0, 0, x, y);
 	}
 }
@@ -290,6 +248,7 @@ function circleLinesHoleDraw(spectrum, hole_size) {
 		var amp = spectrum[i];
 		var r = map(amp, 0, 256, 100, 250);
 
+		// find the rotated version of a point "hole_size" pixels from the center
 		var x1 = hole_size * cos(angle);
 		var y1 = hole_size * sin(angle);
 
@@ -300,7 +259,7 @@ function circleLinesHoleDraw(spectrum, hole_size) {
 	}
 }
 
-// circle of lines with the ampltiude in the middle
+// Circle of lines with the volume level represented in the middle
 function circleLinesWithAmpDraw(spectrum, amplitudeLevel, hole_size) {
 	translate(width/2, height/2);
 
@@ -309,13 +268,10 @@ function circleLinesWithAmpDraw(spectrum, amplitudeLevel, hole_size) {
 		var amp = spectrum[i];
 		var r = map(amp, 0, 256, 125, 250);
 
-		var x1 = hole_size * cos(angle);
-		var y1 = hole_size * sin(angle);
-
 		var x2 = r * cos(angle);
 		var y2 = r * sin(angle);
 
-		line(x1, y1, x2, y2);
+		line(0, 0, x2, y2);
 	}
 
 	var radius1 = map(amplitudeLevel, 0, 1, 200, 300);
@@ -332,7 +288,7 @@ function circleLinesWithAmpDraw(spectrum, amplitudeLevel, hole_size) {
 	ellipse(0, 0, radius3, radius3);
 }
 
-// Circle connected as one big shape
+// Circle connected as one shape
 function circleDraw(spectrum) {
 	translate(width/2, height/2);
 
@@ -342,8 +298,10 @@ function circleDraw(spectrum) {
 		var angle = map(i, 0, spectrum.length, 0, 360);
 		var amp = spectrum[i];
 		var r = map(amp, 0, 256, 100, 250);
+
 		var x = r * cos(angle);
 		var y = r * sin(angle);
+
 		vertex(x, y);
 	}
 
@@ -619,28 +577,5 @@ function barGraphRectDraw(spectrum, spacing) {
 		var y = map(amp, 0, 256, height, 0);
 
 		rect(i*w, y, w-spacing, height-y);
-	}
-}
-
-// Don't use this one... it's not done yet
-function particleForcesDraw(spectrum, particles) {
-	var forces = [];
-	var gravity = [];
-
-	for (var i = 0; i < spectrum.length*2; i++) {
-		// 	CREATE A UNIT VECTOR THAT POINTS IN A DIRECTION
-		forces[i] = createVector(random(-1, 1), random(-1, 1));
-	}
-
-	for (var i = 0; i < particles.length; i++) {
-		gravity[i] = createVector((width/2)-particles[i].pos.x, (height/2)-particles[i].pos.y);
-	}
-
-	for (var i = 0; i < particles.length; i++) {
-		particles[i].addForce(forces[i]);
-		particles[i].addForce(gravity[i]);
-		particles[i].updateSelf();
-		particles[i].edges();
-		particles[i].drawSelf();
 	}
 }
