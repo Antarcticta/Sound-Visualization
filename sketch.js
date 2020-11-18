@@ -56,7 +56,7 @@ function setup() {
 		modeSelect.option(modeOptions[i]);
 	}
 	modeSelect.selected(modeOptions[1]);
-	modeSelect.position(130, 10);
+	modeSelect.position(515, 10);
 	modeSelect.changed(modeChanged);
 
 	// use this to toggle the looping of the file
