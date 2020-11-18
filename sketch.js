@@ -152,6 +152,13 @@ function keyTyped() {
 	}
 }
 
+// this is called when the mouse is pressed
+function mousePressed() {
+	if (mouseY > 30 && mouseX < width) {
+		toggle();
+	}
+}
+
 // use this when files need to load
 function sleep(milliseconds) {
   var start = new Date().getTime();
