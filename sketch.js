@@ -154,7 +154,7 @@ function keyTyped() {
 
 // this is called when the mouse is pressed
 function mousePressed() {
-	if (mouseY > 30 && mouseX < width) {
+	if (mouseY > 30 && mouseY < height && mouseX < width) {
 		toggle();
 	}
 }
