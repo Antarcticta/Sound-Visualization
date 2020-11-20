@@ -11,7 +11,7 @@ var modeSelect;
 var mode = 1;
 var modeOptions = [];
 var input;
-// var canvas;
+var canvas;
 
 function preload() {
 	audio = loadSound("bach.mp3");
@@ -62,9 +62,11 @@ function setup() {
 	// use this to toggle the looping of the file
 	loopCheckbox = createCheckbox('Loop', true);
 	loopCheckbox.changed(loopToggled);
+	loopCheckbox.position(0, 530);
 
 	// for the user-inputted files
 	input = createFileInput(handleFile);
+	input.position(0, 550);
 
 	// set up the canvas to receive drag&dropped files
 	canvas.drop(handleFile);
