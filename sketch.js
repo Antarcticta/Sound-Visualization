@@ -49,7 +49,7 @@ function setup() {
 								'Circle of Points', 'Circle of Points With Lines',
 								'Connected Circle', 'Connected Circle with Amplitude', 'Bar Graph', 'Bar Graph with Amplitude',
 								'Bar Graph of Lines', 'Bar Graph of Lines with Amplitude',
-								'Bar Graph of Rectangles'];
+								'Bar Graph of Rectangles', 'Filled Bar Graph of Rectangles'];
 
 	modeSelect = createSelect();
 	for (var i = 0; i < modeOptions.length; i++) {
@@ -62,11 +62,11 @@ function setup() {
 	// use this to toggle the looping of the file
 	loopCheckbox = createCheckbox('Loop', true);
 	loopCheckbox.changed(loopToggled);
-	loopCheckbox.position(0, 530);
+	loopCheckbox.position(0, 512);
 
 	// for the user-inputted files
 	input = createFileInput(handleFile);
-	input.position(0, 550);
+	input.position(0, 530);
 
 	// set up the canvas to receive drag&dropped files
 	canvas.drop(handleFile);
@@ -222,6 +222,8 @@ function drawAccordingToMode(mode, spectrum, amplitudeLevel) {
 		case 15:
 			barGraphRectDraw(spectrum, 2);
 			return;
+		case 16:
+			barGraphRectDraw(spectrum, 0);
 	}
 }
 
