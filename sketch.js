@@ -1,7 +1,10 @@
 var audio;
 var slider;
+var timeline;
+var previousTime;
 var toggleButton;
 var stopButton;
+var muteButton;
 var loopCheckbox;
 var amplitude;
 var fft;
@@ -12,11 +15,12 @@ var mode = 1;
 var modeOptions = [];
 var input;
 var canvas;
+var previousVolume;
 
 function preload() {
 	audio = loadSound("bach.mp3");
 	sleep(1000);
-	audio.playMode('restart');
+	audio.playMode('sustain');
 	audio.loop();
 }
 
@@ -33,6 +37,13 @@ function setup() {
 	slider = createSlider(0, 1, 0.5, 0.01);
 	slider.position(width-140, 10);
 
+	// timeline slider
+	timeline = createSlider(0, audio.duration(), 0, 0.5);
+	timeline.style('width', '505px');
+	timeline.position(0, 512);
+	timeline.input(timelineChanged);
+	previousTime = 0;
+
 	// play/pause button
 	toggleButton = createButton('►II');
 	toggleButton.mousePressed(toggle);
@@ -42,6 +53,11 @@ function setup() {
 	stopButton = createButton('■');
 	stopButton.mousePressed(stopAudio);
 	stopButton.position(50, 10);
+
+	// mute button
+	muteButton = createButton('Mute');
+	muteButton.mousePressed(toggleMute);
+	muteButton.position(457, 35);
 
 	// for the different options of visualizations
 	modeOptions = ['Circle', 'Circle with Amplitude', 'Circle of Lines', 'Circle of Lines with Hole',
@@ -62,11 +78,11 @@ function setup() {
 	// use this to toggle the looping of the file
 	loopCheckbox = createCheckbox('Loop', true);
 	loopCheckbox.changed(loopToggled);
-	loopCheckbox.position(0, 512);
+	loopCheckbox.position(0, 526);
 
 	// for the user-inputted files
 	input = createFileInput(handleFile);
-	input.position(0, 530);
+	input.position(0, 545);
 
 	// set up the canvas to receive drag&dropped files
 	canvas.drop(handleFile);
@@ -90,10 +106,12 @@ function draw() {
 	var amplitudeLevel = amplitude.getLevel();
 
 	// use the volume slider
-	audio.setVolume(slider.value());
+	updateVolumeSlider();
 
 	// this draws the visualization the user has chosen
 	drawAccordingToMode(mode, spectrum, amplitudeLevel);
+
+	updateTimeline();
 
 	// if the color is too close to the max or min,
 	// make it go in the other direction
@@ -129,9 +147,37 @@ function modeChanged() {
 	mode = modeOptions.indexOf(selected);
 }
 
+// for using the volume slider
+function updateVolumeSlider() {
+	audio.setVolume(slider.value());
+}
+
 // to toggle looping
 function loopToggled() {
-	audio.setLoop(this.checked());
+	audio.setLoop(loopCheckbox.checked());
+}
+
+// used for updating the timeline based on user input
+function updateTimeline() {
+	if(audio.currentTime() === 0) {
+		timeline.value(previousTime);
+	} else {
+		timeline.value(audio.currentTime());
+	}
+	previousTime = timeline.value();
+}
+
+function timelineChanged() {
+	jumpAudioToTime(timeline.value());
+}
+
+function jumpAudioToTime(timeValue) {
+	if (timeValue > 0 || timeValue < audio.duration()) {
+		stopAudio();
+		audio.play(0, 1, slider.value(), timeValue);
+	} else {
+		print("invalid time value");
+	}
 }
 
 // for when a file is inputted
@@ -150,14 +196,73 @@ function handleFile(file) {
 // this is called when a key is pressed
 function keyTyped() {
 	if (key === ' ') {
+		// play/pause
 		toggle();
+	} else if (key === 'm') {
+		toggleMute();
+	} else if (key === 'l') {
+		// toggle looping
+		loopCheckbox.checked(!loopCheckbox.checked());
+		loopToggled();
 	}
+}
+
+// deal with arrow keys and sliders
+function keyPressed() {
+	if (keyCode === LEFT_ARROW) {
+		var timeValue = timeline.value() - 5;
+		if (timeValue < 0) {
+			jumpAudioToTime(0);
+		} else {
+    	jumpAudioToTime(timeValue);
+		}
+  }
+	if (keyCode === RIGHT_ARROW) {
+		var timeValue = timeline.value() + 5;
+		if (timeValue > audio.duration()) {
+			jumpAudioToTime(audio.duration()-0.1);
+		} else {
+    	jumpAudioToTime(timeValue);
+		}
+  }
+	if (keyCode === UP_ARROW) {
+		var volValue = slider.value() + 0.1;
+    slider.value(volValue);
+  }
+	if (keyCode === DOWN_ARROW) {
+		var volValue = slider.value() - 0.1;
+    slider.value(volValue);
+  }
 }
 
 // this is called when the mouse is pressed
 function mousePressed() {
-	if (mouseY > 30 && mouseY < height && mouseX < width) {
+	if (mouseY > 50 && mouseY < height && mouseX < width) {
 		toggle();
+	} else if (mouseX < width && mouseY > height && mouseY < height + 30) {
+		toggleMuteWithValue(0);
+	}
+}
+
+function mouseReleased() {
+	if (mouseX < width && mouseY > height && mouseY < height + 30) {
+		toggleMuteWithValue(1);
+	}
+}
+
+function toggleMute() {
+	if (masterVolume().value == 1) {
+		masterVolume(0);
+	} else if (masterVolume().value == 0) {
+		masterVolume(1);
+	}
+}
+
+function toggleMuteWithValue(value) {
+	if (value == 0 || value == 1) {
+		masterVolume(value);
+	} else {
+		print("Invalid master volume argument");
 	}
 }
 
