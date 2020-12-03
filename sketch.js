@@ -38,11 +38,8 @@ function setup() {
 	slider.position(width-140, 10);
 
 	// timeline slider
-	timeline = createSlider(0, audio.duration(), 0, 0.5);
-	timeline.style('width', '505px');
-	timeline.position(0, 512);
-	timeline.input(timelineChanged);
-	previousTime = 0;
+	// THIS NEEDS TO BE CHANGED TO SUPPORT DIFFERENT-LENGTH FILES
+	calibrateTimeline();
 
 	// play/pause button
 	toggleButton = createButton('►II');
@@ -159,16 +156,20 @@ function loopToggled() {
 
 // used for updating the timeline based on user input
 function updateTimeline() {
-	if(audio.currentTime() === 0) {
-		timeline.value(previousTime);
-	} else {
-		timeline.value(audio.currentTime());
+	if (audio.isLoaded()) {
+		if(audio.currentTime() === 0) {
+			timeline.value(previousTime);
+		} else {
+			timeline.value(map(audio.currentTime(), 0, audio.duration(), 0, 1));
+		}
+		previousTime = timeline.value();
 	}
-	previousTime = timeline.value();
 }
 
 function timelineChanged() {
-	jumpAudioToTime(timeline.value());
+	if (audio.isLoaded()) {
+		jumpAudioToTime(map(timeline.value(), 0, 1, 0, audio.duration()));
+	}
 }
 
 function jumpAudioToTime(timeValue) {
@@ -181,12 +182,17 @@ function jumpAudioToTime(timeValue) {
 }
 
 // for when a file is inputted
+// CHANGE THE TIMELINE TO REFLECT THE NEW FILE'S LENGTH
+// also add a text box that says the name of the file
 function handleFile(file) {
 	print(file.name);
 	if (file.type === 'audio') {
 		stopAudio();
 		audio = loadSound(file.data);
 		sleep(2000);
+		// reset the timeline to reflect the new duration
+		timeline.remove();
+		calibrateTimeline();
 		audio.play();
 	} else {
 		print("This file is not the correct format");
@@ -210,44 +216,53 @@ function keyTyped() {
 // deal with arrow keys and sliders
 function keyPressed() {
 	if (keyCode === LEFT_ARROW) {
-		var timeValue = timeline.value() - 5;
+		var timeValue = map(timeline.value(), 0, 1, 0, audio.duration()) - 5;
 		if (timeValue < 0) {
 			jumpAudioToTime(0);
 		} else {
-    	jumpAudioToTime(timeValue);
+  		jumpAudioToTime(timeValue);
 		}
-  }
+	}
 	if (keyCode === RIGHT_ARROW) {
-		var timeValue = timeline.value() + 5;
+		var timeValue = map(timeline.value(), 0, 1, 0, audio.duration()) + 5;
 		if (timeValue > audio.duration()) {
 			jumpAudioToTime(audio.duration()-0.1);
 		} else {
-    	jumpAudioToTime(timeValue);
+  		jumpAudioToTime(timeValue);
 		}
-  }
+	}
 	if (keyCode === UP_ARROW) {
 		var volValue = slider.value() + 0.1;
-    slider.value(volValue);
-  }
+  	slider.value(volValue);
+	}
 	if (keyCode === DOWN_ARROW) {
 		var volValue = slider.value() - 0.1;
-    slider.value(volValue);
-  }
+  	slider.value(volValue);
+	}
 }
 
 // this is called when the mouse is pressed
 function mousePressed() {
-	if (mouseY > 50 && mouseY < height && mouseX < width) {
+	if (mouseY > 55 && mouseY < height && mouseX < width) {
 		toggle();
 	} else if (mouseX < width && mouseY > height && mouseY < height + 30) {
-		toggleMuteWithValue(0);
+		masterVolume(0);
 	}
 }
 
+// this is called when the mouse is released
 function mouseReleased() {
-	if (mouseX < width && mouseY > height && mouseY < height + 30) {
-		toggleMuteWithValue(1);
+	if (mouseX < width + 50 && mouseY > height - 50) {
+		masterVolume(1);
 	}
+}
+
+function calibrateTimeline() {
+	timeline = createSlider(0, 1, 0, 0.01);
+	timeline.style('width', '505px');
+	timeline.position(0, 512);
+	timeline.input(timelineChanged);
+	previousTime = 0;
 }
 
 function toggleMute() {
@@ -260,9 +275,9 @@ function toggleMute() {
 
 function toggleMuteWithValue(value) {
 	if (value == 0 || value == 1) {
-		masterVolume(value);
+
 	} else {
-		print("Invalid master volume argument");
+		print("invalid volume value");
 	}
 }
 
