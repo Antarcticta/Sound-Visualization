@@ -2,6 +2,8 @@ var audio;
 var slider;
 var timeline;
 var previousTime;
+var timeInSeconds;
+var timeDisplay;
 var toggleButton;
 var stopButton;
 var muteButton;
@@ -16,10 +18,10 @@ var modeOptions = [];
 var input;
 var canvas;
 var previousVolume;
+var playing;
 
 function preload() {
 	audio = loadSound("bach.mp3");
-	sleep(1000);
 	audio.playMode('sustain');
 	audio.loop();
 }
@@ -38,7 +40,6 @@ function setup() {
 	slider.position(width-140, 10);
 
 	// timeline slider
-	// THIS NEEDS TO BE CHANGED TO SUPPORT DIFFERENT-LENGTH FILES
 	calibrateTimeline();
 
 	// play/pause button
@@ -81,6 +82,13 @@ function setup() {
 	input = createFileInput(handleFile);
 	input.position(0, 545);
 
+	// use this to display time vs full time
+	textSize(32);
+
+	fill(0);
+	timeDisplay = text(0, 700, 700);
+	fill(hu, 255, 255);
+
 	// set up the canvas to receive drag&dropped files
 	canvas.drop(handleFile);
 
@@ -108,7 +116,16 @@ function draw() {
 	// this draws the visualization the user has chosen
 	drawAccordingToMode(mode, spectrum, amplitudeLevel);
 
+	// update timeline to reflect current time
 	updateTimeline();
+	// loop the sound file
+	if (timeline.value() >= 0.999 && loopCheckbox.checked()) {
+		jumpAudioToTime(0);
+	}
+
+	// show the current time compared to the full time
+	// timeInSeconds = Math.round(audio.currentTime()).toString();
+	// timeDisplay.style('text', timeInSeconds);
 
 	// if the color is too close to the max or min,
 	// make it go in the other direction
@@ -164,6 +181,8 @@ function updateTimeline() {
 		}
 		previousTime = timeline.value();
 	}
+
+
 }
 
 function timelineChanged() {
@@ -182,18 +201,16 @@ function jumpAudioToTime(timeValue) {
 }
 
 // for when a file is inputted
-// CHANGE THE TIMELINE TO REFLECT THE NEW FILE'S LENGTH
 // also add a text box that says the name of the file
 function handleFile(file) {
 	print(file.name);
 	if (file.type === 'audio') {
 		stopAudio();
 		audio = loadSound(file.data);
-		sleep(2000);
+		playing = false;
 		// reset the timeline to reflect the new duration
 		timeline.remove();
 		calibrateTimeline();
-		audio.play();
 	} else {
 		print("This file is not the correct format");
 	}
