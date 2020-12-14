@@ -62,7 +62,7 @@ function setup() {
 								'Circle of Lines with Amplitude', 'Circle of Circles', 'Circle of Circles with Amplitude',
 								'Circle of Points', 'Circle of Points With Lines',
 								'Connected Circle', 'Connected Circle with Amplitude', 'Bar Graph', 'Bar Graph with Amplitude',
-								'Bar Graph of Lines', 'Bar Graph of Lines with Amplitude',
+								'Bar Graph of Lines', 'Bar Graph of Lines with Amplitude', 'Symmetrical Bar Graph of Lines',
 								'Bar Graph of Rectangles', 'Filled Bar Graph of Rectangles'];
 
 	modeSelect = createSelect();
@@ -76,11 +76,11 @@ function setup() {
 	// use this to toggle the looping of the file
 	loopCheckbox = createCheckbox('Loop', true);
 	loopCheckbox.changed(loopToggled);
-	loopCheckbox.position(0, 526);
+	loopCheckbox.position(450, 528);
 
 	// for the user-inputted files
 	input = createFileInput(handleFile);
-	input.position(0, 545);
+	input.position(5, 532);
 
 	// use this to display time vs full time
 	textSize(32);
@@ -357,10 +357,14 @@ function drawAccordingToMode(mode, spectrum, amplitudeLevel) {
 			barGraphLinesWithAmpDraw(spectrum, amplitudeLevel);
 			return;
 		case 15:
-			barGraphRectDraw(spectrum, 2);
+			barGraphSymmetricalLinesDraw(spectrum);
 			return;
 		case 16:
+			barGraphRectDraw(spectrum, 2);
+			return;
+		case 17:
 			barGraphRectDraw(spectrum, 0);
+			return;
 	}
 }
 
@@ -725,5 +729,18 @@ function barGraphRectDraw(spectrum, spacing) {
 		var y = map(amp, 0, 256, height, 0);
 
 		rect(i*w, y, w-spacing, height-y);
+	}
+}
+
+function barGraphSymmetricalLinesDraw(spectrum) {
+	var w = width / spectrum.length;
+
+	for (var i = 0; i < spectrum.length; i++) {
+		var amp = spectrum[i];
+		var y1 = map(amp, 0, 256, height/2, height * 0.75);
+		var y2 = map(amp, 0, 256, height/2, height * 0.25);
+
+		line(i*w, height/2, i*w, y1);
+		line(i*w, height/2, i*w, y2);
 	}
 }
